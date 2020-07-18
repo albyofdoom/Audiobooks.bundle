@@ -475,6 +475,8 @@ class AudiobookAlbum(Agent.Album):
         series=''
         genre1=None
         genre2=None
+        runtime=''
+        synopsis =''
 		
         for r in html.xpath('//div[contains (@id, "adbl_page_content")]'):
             date = self.getDateFromString(self.getStringContentFromXPath(r, '//li[contains (., "{0}")]/span[2]//text()'.format(ctx['REL_DATE_INFO']).decode('utf-8')))
@@ -502,6 +504,7 @@ class AudiobookAlbum(Agent.Album):
                 page_content=remove_inv_json_esc.sub(r'\1\\\2', page_content)
                 self.Log(page_content)
                 json_data=json_decode(page_content)
+                #Log('json:      %s', json_data)
                 for json_data in json_data:
                     if 'datePublished' in json_data:
                         #for key in json_data:
@@ -526,6 +529,7 @@ class AudiobookAlbum(Agent.Album):
                             narrator+=c['name']
                         studio=json_data['publisher']
                         synopsis=json_data['description']
+                        runtime =json_data['duration']
                     if 'itemListElement' in json_data:
                         #for key in json_data:
                         #    Log('{0}:{1}'.format(key, json_data[key]))
@@ -538,6 +542,10 @@ class AudiobookAlbum(Agent.Album):
             for r in html.xpath('//li[contains (@class, "seriesLabel")]'):
                 series = self.getStringContentFromXPath(r, '//li[contains (@class, "seriesLabel")]//a[1]')
                 #Log(series.strip())
+            #for r in html.xpath('//li[contains (@class,"runtimeLabel")]'):
+                #runtime = self.getStringContentFromXPath(html, 'ul/li[contains (@class,"runtimeLabel")]/span'.decode('utf-8'))
+        
+		
         
 		
         #cleanup synopsis
@@ -561,6 +569,12 @@ class AudiobookAlbum(Agent.Album):
         synopsis = synopsis.replace("<p>", "")
         synopsis = synopsis.replace("</p>", "\n")
 		
+		# Marty's edit to add length and narrator to summary
+        runtime = runtime.replace("PT","Play Time: ")
+        runtime = runtime.replace("H"," Hours, ")
+        runtime = runtime.replace("M"," Minutes")
+        synopsis = runtime + "; Narrated By: " + narrator + "\r\n" + synopsis
+		
 		
         self.Log('date:        %s', date)
         self.Log('title:       %s', title)
@@ -572,13 +586,15 @@ class AudiobookAlbum(Agent.Album):
         self.Log('rating:      %s', rating)
         self.Log('genres:      %s, %s', genre1, genre2)
         self.Log('synopsis:    %s', synopsis)
+		# Log the runtime string -Marty
+        Log('runtime:    %s', runtime)
 		
 		# Set the date and year if found.
         if date is not None:
           metadata.originally_available_at = date
 
 		# Add the genres
-        metadata.genres.clear()
+        # metadata.genres.clear()
         metadata.genres.add(series)
         narrators_list = narrator.split(",")
         for narrators in narrators_list:
@@ -640,7 +656,7 @@ class AudiobookAlbum(Agent.Album):
         if len(metadata.genres) > 0:
             self.Log('|\\')
             for i in range(len(metadata.genres)):
-                self.Log('| * Genre:         %s', metadata.genres[i])
+                Log('| * Genre:         %s', metadata.genres[i])
 
         if len(metadata.posters) > 0:
             self.Log('|\\')
