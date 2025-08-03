@@ -345,6 +345,7 @@ class AudiobookAlbum(Agent.Album):
 
 		# Chop off "unabridged"
         normalizedName = re.sub(r"[\(\[].*?[\)\]]", "", normalizedName)
+        normalizedName = re.sub(r"\ [0-9]\,", " ", normalizedName)
         Log('chopping bracketed text = %s', normalizedName)
         normalizedName = normalizedName.strip()
         Log('normalizedName stripped = %s', normalizedName)
@@ -480,7 +481,7 @@ class AudiobookAlbum(Agent.Album):
 		
         for r in html.xpath('//div[contains (@id, "adbl_page_content")]'):
             date = self.getDateFromString(self.getStringContentFromXPath(r, '//li[contains (., "{0}")]/span[2]//text()'.format(ctx['REL_DATE_INFO']).decode('utf-8')))
-            title = self.getStringContentFromXPath(r, '//h1[contains (@class, "adbl-prod-h1-title")]/text()')
+            # title = self.getStringContentFromXPath(r, '//h1[contains (@class, "adbl-prod-h1-title")]/text()')
             murl = self.getAnchorUrlFromXPath(r, 'div/div/div/div/a[1]')
             thumb = self.getImageUrlFromXPath(r, 'div/div/div/div/div/img')
             author = self.getStringContentFromXPath(r, '//li//a[contains (@class,"author-profile-link")][1]')
@@ -510,7 +511,7 @@ class AudiobookAlbum(Agent.Album):
                         #for key in json_data:
                         #    Log('{0}:{1}'.format(key, json_data[key]))
                         date=self.getDateFromString(json_data['datePublished'])
-                        title=json_data['name']
+                        # title=json_data['name']
                         thumb=json_data['image']
                         rating=json_data['aggregateRating']['ratingValue']
                         author=''
@@ -577,7 +578,7 @@ class AudiobookAlbum(Agent.Album):
 		
 		
         self.Log('date:        %s', date)
-        self.Log('title:       %s', title)
+        # self.Log('title:       %s', title)
         self.Log('author:      %s', author)
         self.Log('series:      %s', series)
         self.Log('narrator:    %s', narrator)
@@ -603,14 +604,14 @@ class AudiobookAlbum(Agent.Album):
         metadata.genres.add(genre2)
 		
 		# other metadata
-        metadata.title = title
+        # metadata.title = title
         metadata.studio = studio
         metadata.summary = synopsis
         metadata.posters[1] = Proxy.Media(HTTP.Request(thumb))
         metadata.posters.validate_keys(thumb)
         metadata.rating = float(rating) * 2
 
-        metadata.title = title
+        # metadata.title = title
         media.artist = author
 		
         self.writeInfo('New data', url, metadata)
